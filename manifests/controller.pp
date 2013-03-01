@@ -69,7 +69,6 @@ class openstack-ha::controller (
   $public_address,
   $public_interface,
   $private_interface,
-  $bridge_interface,
   $admin_email,
   # Required Password
   $admin_password,
@@ -114,6 +113,9 @@ class openstack-ha::controller (
   $glance_on_swift	   = true,
   $glance_api_servers      = undef,
   $glance_registry_host    = '0.0.0.0', 
+  # Glance Swift Backend
+  swift_store_user         = undef,
+  swift_store_key          = undef,
   # Nova
   $nova_db_user            = 'nova',
   $nova_db_dbname          = 'nova',
@@ -152,11 +154,13 @@ class openstack-ha::controller (
   $cinder_db_user          = 'cinder',
   $cinder_db_dbname        = 'cinder',
   # quantum
-  $quantum                 = true,
+  $quantum                 = false,
+  $bridge_interface        = undef,
   $enable_l3_dhcp_agents   = undef,
   $quantum_db_user         = 'quantum',
   $quantum_db_dbname       = 'quantum',
   $quantum_l3_auth_url     = 'http://localhost:35357/v2.0',
+  # Enable or disable OpenStack controller services
   $enabled                 = true
 ) {
 
@@ -179,11 +183,16 @@ class openstack-ha::controller (
       Class['openstack::db::mysql'] -> Class['openstack::keystone']
       Class['openstack::db::mysql'] -> Class['openstack::glance']
       Class['openstack::db::mysql'] -> Class['openstack-ha::nova::controller']
-      Class['openstack::db::mysql'] -> Class['openstack-ha::quantum::controller']
       Class['glance::db::mysql'] -> Class['glance::registry']
+      if ($quantum) {
+        Class['openstack::db::mysql'] -> Class['openstack-ha::quantum']
+      }
+      if ($cinder) {
+        Class['openstack::db::mysql'] -> Class['openstack::cinder']
+      }
     }
 
-    class { 'openstack-ha::patch::mysql': }
+    class { 'openstack-ha::patch::nova-mysql': }
 
     class { 'openstack::db::mysql':
       mysql_root_password     => $mysql_root_password,
@@ -260,18 +269,20 @@ class openstack-ha::controller (
 
   ######## BEGIN GLANCE ##########
   class { 'openstack::glance':
-    verbose                   => $verbose,
-    db_type                   => $db_type,
-    db_host                   => $db_host,
-    registry_host             => $glance_registry_host,
-    bind_address	      => $api_bind_address,
-    keystone_host             => $keystone_host,
-    glance_on_swift	      => $glance_on_swift,
-    glance_db_user            => $glance_db_user,
-    glance_db_dbname          => $glance_db_dbname,
-    glance_db_password        => $glance_db_password,
-    glance_user_password      => $glance_user_password,
-    enabled                   => $enabled,
+    verbose              => $verbose,
+    db_type              => $db_type,
+    db_host              => $db_host,
+    registry_host        => $glance_registry_host,
+    bind_address	 => $api_bind_address,
+    keystone_host        => $keystone_host,
+    glance_on_swift	 => $glance_on_swift,
+    swift_store_user     => $swift_store_user,
+    swift_store_key      => $swift_store_key,
+    glance_db_user       => $glance_db_user,
+    glance_db_dbname     => $glance_db_dbname,
+    glance_db_password   => $glance_db_password,
+    glance_user_password => $glance_user_password,
+    enabled              => $enabled,
   }
 
   ######## BEGIN NOVA ###########
@@ -328,39 +339,40 @@ class openstack-ha::controller (
   }
 
   ######### Quantum Controller Services ########
-  class { 'openstack-ha::quantum::controller':
-    # Database
-    db_host		    => $db_host,
-    # Networking
-    internal_address	    => $internal_address_real,
-    # Rabbit
-    cluster_rabbit	    => $cluster_rabbit,
-    rabbit_hosts            => $rabbit_hosts,
-    rabbit_user             => $rabbit_user,
-    rabbit_password	    => $rabbit_password,
-    # Quantum OVS
-    bridge_interface	    => $bridge_interface, 
-    # Database
-    quantum_db_dbname       => $quantum_db_dbname,
-    quantum_db_user	    => $quantum_db_user,
-    quantum_db_password	    => $quantum_db_password,
-    # Quantum L3 Agent
-    enable_l3_dhcp_agents   => $enable_l3_dhcp_agents,
-    bind_address            => $api_bind_address,
-    quantum_l3_auth_url     => $quantum_l3_auth_url,
-    quantum_user_password   => $quantum_user_password,
-    # Keystone 
-    keystone_host	    => $keystone_host,
-    # Nova
-    nova_metadata_ip	    => $api_bind_address,
-    # General
-    enabled		    => true,
+  if ($quantum) {
+
+    class { 'openstack-ha::quantum':
+      # Database
+      db_host		    => $db_host,
+      # Networking
+      internal_address	    => $internal_address_real,
+      # Rabbit
+      cluster_rabbit	    => $cluster_rabbit,
+      rabbit_hosts          => $rabbit_hosts,
+      rabbit_user           => $rabbit_user,
+      rabbit_password	    => $rabbit_password,
+      # Quantum OVS
+      bridge_interface	    => $bridge_interface, 
+      # Database
+      quantum_db_dbname     => $quantum_db_dbname,
+      quantum_db_user	    => $quantum_db_user,
+      quantum_db_password   => $quantum_db_password,
+      # Quantum L3 Agent
+      enable_l3_dhcp_agents => $enable_l3_dhcp_agents,
+      bind_address          => $api_bind_address,
+      quantum_l3_auth_url   => $quantum_l3_auth_url,
+      quantum_user_password => $quantum_user_password,
+      # Keystone 
+      keystone_host	    => $keystone_host,
+      # Nova
+      nova_metadata_ip	    => $api_bind_address,
+      # General
+      enabled		    => $enabled,
+    }
   }
 
   ######### Cinder Controller Services ########
   if ($cinder) {
-
-    Class['openstack::db::mysql'] -> Class['openstack::cinder']
 
     class { "cinder::base":
       verbose         => $verbose,

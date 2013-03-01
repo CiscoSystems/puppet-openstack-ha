@@ -35,7 +35,7 @@ class openstack-ha::compute (
   $quantum_db_user        	 = 'quantum',
   $quantum_db_password    	 = 'quantum_pass',
   # Network
-  $api_bind_address		 = '0.0.0.0',
+  $quantum_bind_address		 = '0.0.0.0',
   $public_interface              = undef,
   $private_interface             = undef,
   $fixed_range                   = undef,
@@ -43,12 +43,13 @@ class openstack-ha::compute (
   $network_config                = {},
   $multi_host                    = false,
   # Quantum
-  $quantum                       = true,
+  $quantum                       = false,
   $quantum_user_password         = 'quantum_pass',
   $keystone_host                 = '127.0.0.1',
   $bridge_interface		 = $public_interface,
   # Nova
   $metadata_address              = '169.254.169.254', 
+  $api_bind_address		 = '0.0.0.0',
   $purge_nova_config             = false,
   $libvirt_vif_driver	 	 = 'nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver',
   # Rabbit
@@ -86,7 +87,7 @@ class openstack-ha::compute (
     'mysql': {
 
       # Patch mysql
-      class { 'openstack-ha::patch::mysql': }
+      class { 'openstack-ha::patch::nova-mysql': }
 
       $nova_sql_connection = "mysql://${nova_db_user}:${nova_db_password}@${db_host}/${nova_db_dbname}"
       $cinder_sql_connection = "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}"
@@ -97,8 +98,10 @@ class openstack-ha::compute (
   # Patch Kombu client libraries to support RabbitMQ 
   # mirrored queues for Nova and Quantum.
   if $cluster_rabbit {
-    class { 'openstack-ha::patch::quantum-rabbitmq':
-      rabbit_hosts => $rabbit_hosts
+    if ($quantum) {
+      class { 'openstack-ha::patch::quantum-rabbitmq':
+        rabbit_hosts => $rabbit_hosts
+      }
     }
     class { 'openstack-ha::patch::nova-rabbitmq':
       rabbit_hosts => $rabbit_hosts
@@ -144,9 +147,6 @@ class openstack-ha::compute (
     vncserver_proxyclient_address => $internal_address,
     vncproxy_host                 => $vncproxy_host,
   }
-    nova_config {
-      'metadata_host': value => $metadata_address; 
-    }
 
   # Configure libvirt for nova-compute
   class { 'nova::compute::libvirt':
@@ -173,12 +173,21 @@ class openstack-ha::compute (
         fail('public_interface must be defined for multi host compute nodes')
       }
       $enable_network_service = true
+      if ($cinder) {
+        $volume_api_class_real = 'nova.volume.cinder.API'
+        $enabled_apis_real     = 'ec2,osapi_compute,metadata'
+      } else {
+        $volume_api_class_real = 'nova.volume.api.API'
+        $enabled_apis_real     = 'ec2,osapi_compute,osapi_volume,metadata'
+      }
       class { 'nova::api':
-        enabled           => true,
+        enabled           => $enabled,
         admin_tenant_name => 'services',
         admin_user        => 'nova',
         admin_password    => $nova_user_password,
-        # TODO override enabled_apis
+        api_bind_address  => $api_bind_address,
+        enabled_apis	  => $enabled_apis_real,
+        volume_api_class  => $volume_api_class_real,
       }
     } else {
       $enable_network_service = false
@@ -214,7 +223,7 @@ class openstack-ha::compute (
     # Install and configure Quantum networking.
     class { 'quantum':
       enabled             => $enabled,
-      bind_host           => $api_bind_address,
+      bind_host           => $quantum_bind_address,
       rabbit_user         => $rabbit_user,
       rabbit_password     => $rabbit_password,
       verbose             => $verbose,
@@ -234,6 +243,10 @@ class openstack-ha::compute (
 
     class { 'nova::compute::quantum': 
       libvirt_vif_driver => $libvirt_vif_driver,
+    }
+
+    nova_config {
+      'metadata_host': value => $metadata_address;
     }
 
     # Configures nova.conf entries applicable to Quantum.
@@ -263,12 +276,8 @@ class openstack-ha::compute (
       iscsi_ip_address => $internal_address,
       volume_group     => $cinder_volume,
     }
-
-    # set in nova::api
-    if ! defined(Nova_config['volume_api_class']) {
-      nova_config { 'volume_api_class': value => 'nova.volume.cinder.API' }
-    }
-  } elsif ($nova_volume_enable) {
+  } 
+  if ($nova_volume_enable) {
     # Set up nova-volume
     class { 'nova::volume':
       enabled => $enabled, 
@@ -277,10 +286,6 @@ class openstack-ha::compute (
       volume_group     => $nova_volume,
       iscsi_ip_address => $internal_address,
     } 
-    if ! defined(Nova_config['volume_api_class']) {
-      nova_config { 'volume_api_class': value => 'nova.volume.api.API' }
-    }
-  } else {
-  # no cinder or nova-volume
- }
+  }
+
 }

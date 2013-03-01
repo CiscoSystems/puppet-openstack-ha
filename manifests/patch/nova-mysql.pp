@@ -1,9 +1,9 @@
-class openstack-ha::patch::mysql {
+class openstack-ha::patch::nova-mysql {
   include openstack-ha::patch
 
   file { "/tmp/mysql.patch":
     ensure => present,
-    source => 'puppet:///modules/openstack-ha/mysql.patch'
+    source => 'puppet:///modules/openstack-ha/nova-mysql.patch'
   }
 
   exec { 'patch-nova-mysql':

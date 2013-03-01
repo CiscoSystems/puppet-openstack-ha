@@ -44,7 +44,7 @@ class openstack-ha::nova::controller (
   $public_interface          = undef,
   $private_interface         = undef,
   # quantum
-  $quantum                   = true,
+  $quantum                   = false,
   $quantum_user_password     = 'quantum_pass',
   # Nova
   $nova_db_user              = 'nova',

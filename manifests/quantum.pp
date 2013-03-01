@@ -1,5 +1,5 @@
 #
-# == Class: openstack-ha::quantum::controller
+# == Class: openstack-ha::quantum
 #
 # Class to define quantum components used on an OpenStack Controller Node.
 #
@@ -9,7 +9,7 @@
 #
 # === Examples
 #
-# class { 'openstack-ha::quantum::controller':
+# class { 'openstack-ha::quantum':
 #   enable_l3_dhcp_agents => true,
 #   db_host               => '127.0.0.1',
 #   rabbit_password       => 'changeme',
@@ -17,7 +17,7 @@
 # }
 #
 
-class openstack-ha::quantum::controller (
+class openstack-ha::quantum (
   # Database Required
   $db_host,
   # Networking Required
