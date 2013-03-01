@@ -50,7 +50,7 @@ repos:
     nova: folsom_ha
     keystone: folsom_ha
     quantum: folsom_ha
-    swift: folsom
+    swift: folsom_ha
     openstack: folsom_ha
     openstack-ha: folsom_ha
     horizon: folsom
