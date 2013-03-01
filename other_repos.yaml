@@ -9,12 +9,9 @@ repos:
     git://github.com/CiscoSystems/puppet-horizon: horizon
     git://github.com/CiscoSystems/puppet-cinder: cinder
     git://github.com/CiscoSystems/puppet-openstack: openstack
-    git://github.com/CiscoSystems/puppet-openstack-ha: openstack-ha
     # openstack middleware
     git://github.com/CiscoSystems/puppet-rabbitmq: rabbitmq
     git://github.com/CiscoSystems/puppet-mysql: mysql
-    git://github.com/CiscoSystems/puppet-git: git
-    git://github.com/CiscoSystems/puppet-vcsrepo: vcsrepo
     git://github.com/CiscoSystems/puppet-memcached: memcached
     git://github.com/CiscoSystems/puppet-rsync: rsync
     git://github.com/CiscoSystems/puppet-apache: apache
@@ -24,7 +21,7 @@ repos:
     git://github.com/CiscoSystems/puppet-ssh: ssh
     git://github.com/CiscoSystems/puppet-stdlib: stdlib
     git://github.com/CiscoSystems/puppet-apt: apt
-    git://github.com/CiscoSystems/puppet-cacher-ng: apt-cacher-ng
+    git://github.com/CiscoSystems/puppet-apt-cacher-ng: apt-cacher-ng
     git://github.com/CiscoSystems/puppet-augeas: augeas
     git://github.com/CiscoSystems/puppet-boolean: boolean
     git://github.com/CiscoSystems/puppet-cobbler: cobbler
@@ -34,7 +31,7 @@ repos:
     git://github.com/CiscoSystems/puppet-filemapper: filemapper
     git://github.com/CiscoSystems/puppet-haproxy: haproxy
     git://github.com/CiscoSystems/puppet-keepalived: keepalived
-    git://github.com/CiscoSystems/puppet-lvm: lvm
+    git://github.com/CiscoSystems/puppetlabs-lvm: lvm
     git://github.com/CiscoSystems/puppet-network: network
     git://github.com/CiscoSystems/puppet-ntp: ntp
     git://github.com/CiscoSystems/puppet-pip: pip
@@ -52,18 +49,15 @@ repos:
     quantum: folsom_ha
     swift: folsom_ha
     openstack: folsom_ha
-    openstack-ha: folsom_ha
     horizon: folsom
     apache: folsom
     apt: folsom
     apt-cacher-ng: folsom
-    augeas: folsom_ha
-    cobbler: folsom_ha
-    concat: folsom_ha
-    create_resources: folsom_ha
-    dnsmasq: folsom_ha
+    cobbler: folsom
+    concat: folsom
+    create_resources: folsom
+    dnsmasq: folsom
     filemapper: folsom
-    haproxy: folsom_ha
     inifile: folsom
     keepalived: folsom_ha
     lvm: folsom
