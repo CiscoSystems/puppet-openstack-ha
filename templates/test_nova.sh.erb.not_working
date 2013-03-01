@@ -1,0 +1,91 @@
+#!/bin/bash
+#
+# assumes that openstack credentails are set in this file
+source <%= rc_file_path %>
+
+echo "Downloading image. This may take a few minutes."
+
+<% if image_type == 'cirros' -%>
+# Grab an image.  Cirros is a nice small Linux that's easy to deploy
+wget https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img
+
+# Add it to glance so that we can use it in Openstack
+sleep 5
+glance add name="cirros" is_public=true container_format=ovf disk_format=qcow2 < cirros-0.3.0-x86_64-disk.img
+
+# Caputre the Image ID so taht we can call the right UUID for this image
+image_id=`glance image-list | grep 'cirros' | head -1 |  awk -F' ' '{print $2}'`
+
+login_user='cirros'
+<% else -%>
+
+# otherwise, use an Ubuntu precise image. This is a larger image, but a little more
+# feature-full and realistic
+wget  http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img
+
+# import that image into glance
+sleep 5
+glance add name="precise" is_public=true container_format=ovf disk_format=qcow2 < precise-server-cloudimg-amd64-disk1.img
+
+# Caputre the Image ID so that we can call the right UUID for this image
+image_id=`glance image-list | grep 'precise' | head -1 |  awk -F' ' '{print $1}'`
+login_user='ubuntu'
+<% end -%>
+
+
+# create a pub/priv keypair
+ssh-keygen -f /tmp/id_rsa -t rsa -N ''
+
+#add the public key to nova.
+nova keypair-add --pub_key /tmp/id_rsa.pub test_key
+
+instance_name='<%= image_type %>_test_vm'
+
+# If Quantum is enabled, create networks, subnets and router.
+<% if quantum -%>
+public_net=<%= public_net %>
+quantum net-create public --router:external=True
+quantum subnet-create --name public public $public_net
+quantum net-create net1
+quantum subnet-create --name subnet1 net1 10.10.10.0/24
+quantum router-create router1
+quantum router-interface-add router1 subnet1
+quantum router-gateway-set router1 public
+quantum_net=`quantum net-list | grep net1 | awk -F' ' '{print $2}'`
+<% end -%>
+
+# Create Nova security group and rules if floating-ip is enabled.
+<% if floating_ip -%>
+nova secgroup-create nova_test 'puppet test security group'
+nova secgroup-add-rule nova_test tcp 22 22 0.0.0.0/0
+nova secgroup-add-rule nova_test tcp 80 80 0.0.0.0/0
+nova secgroup-add-rule nova_test icmp -1 -1 0.0.0.0/0
+<% end -%>
+
+# Boot the added image against the "m1.tiny" flavor which by default maps to a micro instance.  
+sleep 5
+nova boot --image $image_id --flavor m1.tiny --nic net-id=$quantum_net<% if floating_ip -%> --security_groups nova_test<% end %> --key_name test_key $instance_name
+
+# let the system catch up
+sleep 15
+
+# Show the state of the system we just requested.
+nova show $instance_name
+
+# wait for the server to boot
+sleep 15
+
+# Now add the floating IP we reserved earlier to the machine.
+<% if floating_ip -%>
+port_id=`quantum port-list | grep 10.10.10.3 | awk -F' ' '{print $2}'`
+floating_ip=`quantum floatingip-list | grep '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | awk '{print $6}'`
+quantum floatingip-create --port_id $port_id public
+<% end -%>
+
+# Wait  and then try to SSH to the node, leveraging the private key
+# we generated earlier.
+<% if floating_ip -%>
+sleep 10
+ssh ${login_user}@${floating_ip} -i /tmp/id_rsa -o StrictHostKeyChecking=no
+<% end -%>
+exit 0
