@@ -144,7 +144,7 @@ These modules are based on the administrative guides for OpenStack
 
         cd <module_path>
         git clone -b folsom_ha git://github.com/CiscoSystems/puppet-openstack-ha.git openstack-ha
-        cd openstack
+        cd openstack-ha
         rake modules:clone
 
   * Copy the example OpenStack HA manifests to your manifests directory:
