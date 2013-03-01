@@ -11,16 +11,16 @@
 # If you are behind a proxy you may choose not to use our ftp distribution, and
 # instead try our http distribution location. Note the http location is not
 # a permanent location and may change at any time.
-$location           = "http://192.168.26.163/openstack/cisco"
+$location          = "ftp://ftpeng.cisco.com/openstack/cisco"
 
 # Alternate, uncomment this one, and coment out the one above
-#$location          = "ftp://ftpeng.cisco.com/openstack/cisco"
+#$location           = "http://192.168.26.163/openstack/cisco"
 
 ########### NTP Configuration ############
 # Change this to the location of a time server in your organization accessible to the build server
 # The build server will synchronize with this time server, and will in turn function as the time
 # server for your OpenStack nodes
-$ntp_server = "ntp.esl.cisco.com"
+$ntp_server = "ntp.example.com"
 
 ########### Build Node Cobbler Variables ############
 # Change these parameters to define the IP address and other network settings of your build node
@@ -39,7 +39,7 @@ $mgt_gateway       = '192.168.220.1'
 # node will serve addresses in this domain - but if it is, you can also add entries for
 # the nodes in your corporate DNS iand they will be usable *if* the above addresses 
 # are routeable from elsewhere in your network.
-$domain_name        = 'dmz-pod2.lab'
+$domain_name        = 'example.com'
 
 # This setting likely does not need to be changed
 # To speed installation of your OpenStack nodes, it configures your build node to function
@@ -214,7 +214,7 @@ node build-os inherits build-node {
   }
 
 # Begin Load-Balancer Nodes
-  cobbler_node { "compute02":
+  cobbler_node { "slb01":
     node_type      => "load-balancer",
     mac            => "A4:4C:11:13:A7:F1",
     ip             => "192.168.220.52",
@@ -222,7 +222,7 @@ node build-os inherits build-node {
     preseed        => "cisco-preseed",
   }
 
-  cobbler_node { "compute03":
+  cobbler_node { "slb02":
     node_type      => "load-balancer",
     mac            => "A4:4C:11:13:43:DB",
     ip             => "192.168.220.53",

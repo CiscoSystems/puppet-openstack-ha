@@ -3,9 +3,9 @@
 # two dedicated HAproxy nodes for load-balancing 
 # three OpenStack Controllers and two Swift Proxies
 # This example file should then be imported into your Site.pp manifest
-#
+# Change slb01 and slb02 node names to the hostnames of your HAProxy nodes.
 
-node /compute02/ inherits base {
+node /slb01/ inherits base {
 
   # Required for supporting a virtual IP address not directly associated to the node.
   sysctl::value { "net.ipv4.ip_nonlocal_bind": value => "1" }
@@ -284,7 +284,7 @@ node /compute02/ inherits base {
   }
 }
 
-node /compute03/ inherits base {
+node /slb02/ inherits base {
 
   # Required for supporting a virtual IP address not directly associated to the node.
   sysctl::value { "net.ipv4.ip_nonlocal_bind": value => "1" }
