@@ -27,6 +27,7 @@ namespace :modules do
     branches_to_checkout = (repos['checkout_branches'] || {})
     repos_to_clone.each do |remote, local|
       # I should check to see if the file is there?
+      sleep 2
       outpath = File.join(modulepath, local)
       output = `git clone #{remote} #{outpath}`
       puts output
