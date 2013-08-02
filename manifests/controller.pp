@@ -16,8 +16,14 @@
 # [keystone_admin_token] Admin token for keystone.
 # [keystone_bind_address] Address that keystone api service should bind to.
 #   Optional. Defaults to '0.0.0.0'.
+# [keystone_token_format] Format keystone uses for tokens. Optional. Defaults to PKI.
+#   Supports PKI and UUID.
+# [keystone_enable_ssl] Configure Keystone to support SSL certificate-based authentication.
+#   (Optional). Defaults to true.
 # [glance_db_password] Glance DB password.
 # [glance_user_password] Glance service user password.
+# [glance_registry_host] Address used by Glance API to find the Glance Registry service.
+#   Optional. Defaults to '0.0.0.0'.
 # [nova_db_password] Nova DB password.
 # [nova_user_password] Nova service password.
 #
@@ -168,8 +174,11 @@ class openstack-ha::controller (
   $keystone_admin_tenant    = 'admin',
   $keystone_bind_address    = '0.0.0.0',
   $region                   = 'RegionOne',
+  $keystone_enable_ssl      = false,
+  $keystone_token_format    = 'UUID',
   # Glance
   $glance_bind_address      = '0.0.0.0',
+  $glance_registry_host     = '0.0.0.0',
   $glance_db_user           = 'glance',
   $glance_db_dbname         = 'glance',
   $glance_api_servers       = undef,
@@ -245,7 +254,7 @@ class openstack-ha::controller (
   $quantum_db_name          = 'quantum',
   $quantum_auth_url         = 'http://127.0.0.1:35357/v2.0',
   # swift
-  $swift                    = true,
+  $swift                    = false,
   $swift_public_address     = false,
   $enabled                  = true
 ) {
@@ -366,6 +375,8 @@ class openstack-ha::controller (
     swift_public_address  => $swift_public_address,
     enabled               => $enabled,
     bind_host             => $keystone_bind_address,
+    enable_ssl            => $keystone_enable_ssl,
+    token_format          => $keystone_token_format,
   }
 
 
@@ -377,7 +388,7 @@ class openstack-ha::controller (
     db_host                  => $db_host,
     sql_idle_timeout         => $sql_idle_timeout,
     bind_host                => $glance_bind_address,
-    registry_host            => $registry_host,
+    registry_host            => $glance_registry_host,
     keystone_host            => $keystone_host,
     db_user                  => $glance_db_user,
     db_name                  => $glance_db_dbname,
@@ -515,7 +526,7 @@ class openstack-ha::controller (
   if ($cinder) {
 
     # Ensure things are run in order
-    Class['openstack-ha::db::galera'] -> Class['openstack::cinder']
+    Class['openstack-ha::db::galera'] -> Class['openstack::cinder::controller']
 
     if ! $cinder_db_password {
       fail('Must set cinder db password when setting up a cinder controller')

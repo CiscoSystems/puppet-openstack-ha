@@ -52,7 +52,7 @@ class openstack-ha::compute (
   $bridge_interface              = undef,
   $external_bridge_name          = 'br-ex',
   $physical_network              = 'physnet1',
-  $tenant_network_type           = 'vlan'
+  $tenant_network_type           = 'vlan',
   $network_vlan_ranges           = undef,
   $enable_ovs_agent              = true,
   $enable_l3_agent               = false,
@@ -243,7 +243,6 @@ class openstack-ha::compute (
       # Quantum OVS
       enable_ovs_agent      => $enable_ovs_agent,
       firewall_driver       => $quantum_firewall_driver,
-      enable_ovs_agent      => $enable_ovs_agent,
       tenant_network_type   => $tenant_network_type,
       network_vlan_ranges   => $network_vlan_ranges,
       ovs_enable_tunneling  => $ovs_enable_tunneling,
