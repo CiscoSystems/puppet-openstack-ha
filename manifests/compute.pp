@@ -53,7 +53,7 @@ class openstack-ha::compute (
   $external_bridge_name          = 'br-ex',
   $physical_network              = 'physnet1',
   $tenant_network_type           = 'vlan',
-  $network_vlan_ranges           = undef,
+  $network_vlan_ranges           = 'physnet1:1000:2000',
   $enable_ovs_agent              = true,
   $enable_l3_agent               = false,
   $enable_dhcp_agent             = false,
@@ -61,7 +61,7 @@ class openstack-ha::compute (
   $keystone_host                 = '127.0.0.1',
   $quantum_host                  = '127.0.0.1',
   $ovs_local_ip                  = false,
-  $quantum_firewall_driver       = true,
+  $quantum_firewall_driver       = 'quantum.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver',
   # Nova
   $nova_admin_tenant_name        = 'services',
   $nova_admin_user               = 'nova',
