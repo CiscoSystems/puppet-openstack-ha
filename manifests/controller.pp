@@ -18,8 +18,6 @@
 #   Optional. Defaults to '0.0.0.0'.
 # [keystone_token_format] Format keystone uses for tokens. Optional. Defaults to PKI.
 #   Supports PKI and UUID.
-# [keystone_enable_ssl] Configure Keystone to support SSL certificate-based authentication.
-#   (Optional). Defaults to true.
 # [glance_db_password] Glance DB password.
 # [glance_user_password] Glance service user password.
 # [glance_registry_host] Address used by Glance API to find the Glance Registry service.
@@ -174,7 +172,6 @@ class openstack-ha::controller (
   $keystone_admin_tenant    = 'admin',
   $keystone_bind_address    = '0.0.0.0',
   $region                   = 'RegionOne',
-  $keystone_enable_ssl      = false,
   $keystone_token_format    = 'UUID',
   # Glance
   $glance_bind_address      = '0.0.0.0',
@@ -375,7 +372,6 @@ class openstack-ha::controller (
     swift_public_address  => $swift_public_address,
     enabled               => $enabled,
     bind_host             => $keystone_bind_address,
-    enable_ssl            => $keystone_enable_ssl,
     token_format          => $keystone_token_format,
   }
 
