@@ -36,7 +36,6 @@ class openstack-ha::load-balancer(
 ) {
 
   include keepalived
-#  include haproxy
 
   if ($controller_state == 'MASTER') {
     $controller_priority = '101'
@@ -95,8 +94,6 @@ class openstack-ha::load-balancer(
     options   => {
       'option'  => ['httpchk'],
       'mode'    => 'tcp',
-#      'balance' => 'roundrobin'
-#      'balance' => 'leastconn'
       'balance' => 'source'
     }
   }
@@ -110,35 +107,30 @@ class openstack-ha::load-balancer(
     options           => 'check port 9200 inter 2000 rise 2 fall 5',
   }
 
-#  haproxy::listen { 'rabbit_cluster':
-#    ipaddress => $controller_virtual_ip,
-#    ports     => '5672',
-#    options   => {
-#      'option'  => ['tcpka', 'tcplog'],
-#      'mode'    => 'tcp',
-#      'balance' => 'roundrobin'
-#    }
-#  }
+  haproxy::listen { 'rabbit_cluster':
+    ipaddress => $controller_virtual_ip,
+    ports     => '5672',
+    options   => {
+      'option'  => ['tcpka', 'tcplog'],
+      'mode'    => 'tcp',
+      'balance' => 'source'
+    }
+  }
 
-#  haproxy::balancermember { 'rabbit;':
-#    listening_service => 'rabbit_cluster',
-#    ports             => '5672',
-#    server_names      => $controller_names,
-#    ipaddresses       => $controller_ipaddresses,
-#    options           => 'check inter 2000 rise 2 fall 5',
-#  }
+  haproxy::balancermember { 'rabbit;':
+    listening_service => 'rabbit_cluster',
+    ports             => '5672',
+    server_names      => $controller_names,
+    ipaddresses       => $controller_ipaddresses,
+    options           => 'check inter 2000 rise 2 fall 5',
+  }
 
   haproxy::listen { 'keystone_public_internal_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '5000',
     options   => {
-#      'option'  => ['tcpka', 'httpchk', 'tcplog'],
-      'option'  => ['httpchk'],
-      'mode'    => 'http',
-#      'mode'    => 'tcp',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
-#      'balance' => 'source'
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -148,20 +140,14 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'keystone_admin_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '35357',
     options   => {
-#      'option'  => ['tcpka', 'httpchk', 'tcplog'],
-      'option'  => ['httpchk'],
-      'mode'    => 'http',
-#      'mode'    => 'tcp',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
-#      'balance' => 'source'
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -171,18 +157,14 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'nova_ec2_api_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '8773',
     options   => {
-#      'option'  => ['tcpka', 'httpchk GET /services/Cloud', 'tcplog'],
-      'option'  => ['forwardfor'],
-      'mode'    => 'http',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
+      'option'  => ['tcpka', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -192,18 +174,14 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'nova_osapi_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '8774',
     options   => {
-#      'option'  => ['tcpka', 'httpchk', 'tcplog'],
-      'option'  => ['forwardfor'],
-      'mode'    => 'http',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -213,19 +191,14 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'nova_metadata_api_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '8775',
     options   => {
-#      'option'  => ['tcpka', 'tcplog'],
-      'option'  => ['forwardfor'],
-#      'mode'    => 'tcp',
-      'mode'    => 'http',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
+      'option'  => ['tcpka', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -235,18 +208,14 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'quantum_api_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '9696',
     options   => {
-#      'option'  => ['tcpka', 'httpchk', 'tcplog'],
-      'option'  => ['forwardfor', 'httpchk',],
-      'mode'    => 'http',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -256,18 +225,14 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'cinder_api_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '8776',
     options   => {
-#      'option'  => ['tcpka', 'httpchk', 'tcplog'],
-      'option'  => ['forwardfor', 'httpchk'],
-      'mode'    => 'http',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -277,16 +242,14 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'glance_registry_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '9191',
     options   => {
-      'mode'    => 'http',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
+      'option'  => ['tcpka', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -296,7 +259,6 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'glance_api_cluster':
@@ -304,11 +266,6 @@ class openstack-ha::load-balancer(
     ports     => '9292',
     options   => {
       'option'  => ['tcpka', 'httpchk', 'tcplog'],
-#      'option'  => ['httpchk'],
-#      'mode'    => 'http',
-      'mode'    => 'tcp',
-#      'cookie'  => 'SERVERID rewrite',
-#      'balance' => 'roundrobin'
       'balance' => 'source'
     }
   }
@@ -319,7 +276,6 @@ class openstack-ha::load-balancer(
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-#    define_cookies    => true
   }
 
   # Note: Failures were experienced when the balance-member was named Horizon.
@@ -327,12 +283,11 @@ class openstack-ha::load-balancer(
     ipaddress => $controller_virtual_ip,
     ports     => '80',
     options   => {
-#      'option'  => ['tcpka', 'httpchk', 'tcplog'],
       'option'  => ['forwardfor', 'httpchk', 'httpclose'],
       'mode'    => 'http',
       'cookie'  => 'SERVERID insert indirect nocache',
       'capture' => 'cookie vgnvisitor= len 32',
-      'balance' => 'roundrobin',
+      'balance' => 'source',
       'rspidel' => '^Set-cookie:\ IP='
     }
   }
@@ -353,8 +308,7 @@ class openstack-ha::load-balancer(
     ports     => '6080',
     options   => {
       'option'  => ['tcpka', 'tcplog'],
-      'mode'    => 'tcp',
-      'balance' => 'roundrobin'
+      'balance' => 'source'
     }
   }
 
@@ -367,32 +321,13 @@ class openstack-ha::load-balancer(
     options           => 'check inter 2000 rise 2 fall 5',
   }
 
-  # Uncomment if using Spice
-#  haproxy::listen { 'spice_cluster':
-#    ipaddress => $controller_virtual_ip,
-#    ports     => '6082',
-#    options   => {
-#      'option'  => ['tcpka', 'tcplog'],
-#      'balance' => 'source'
-#    }
-#  }
-
-  # Uncomment if using Spice
-#  haproxy::balancermember { 'spice':
-#    listening_service => 'spice_cluster',
-#    ports             => '6082',
-#    server_names      => $controller_names,
-#    ipaddresses       => $controller_ipaddresses,
-#    options           => 'check inter 2000 rise 2 fall 5',
-#  }
 
   haproxy::listen { 'nova_memcached_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '11211',
     options   => {
       'option'  => ['tcpka', 'tcplog'],
-      'mode'    => 'tcp',
-      'balance' => 'roundrobin'
+      'balance' => 'source'
     }
   }
 
@@ -408,12 +343,8 @@ class openstack-ha::load-balancer(
     ipaddress => $swift_proxy_virtual_ip,
     ports     => '8080',
     options   => {
-      'option'  => ['httpchk GET /healthcheck'],
-      'mode'    => 'http',
-#      'mode'    => 'tcp',
-      'cookie'  => 'SERVERID rewrite',
-      'balance' => 'roundrobin'
-#      'balance' => 'source'
+      'option'  => ['tcpka', 'tcplog'],
+      'balance' => 'source'
     }
   }
 
@@ -423,7 +354,6 @@ class openstack-ha::load-balancer(
     server_names      => $swift_proxy_names,
     ipaddresses       => $swift_proxy_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
-    define_cookies    => true
   }
 
   haproxy::listen { 'swift_memcached_cluster':
@@ -431,8 +361,7 @@ class openstack-ha::load-balancer(
     ports     => '11211',
     options   => {
       'option'  => ['tcpka', 'tcplog'],
-      'mode'    => 'tcp',
-      'balance' => 'roundrobin'
+      'balance' => 'source'
     }
   }
 
