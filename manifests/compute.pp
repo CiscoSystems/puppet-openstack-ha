@@ -113,26 +113,6 @@ class openstack-ha::compute (
     $vncserver_listen_real = $internal_address
   }
 
-  # Install the required client packages needed
-  # for proper mirrored queueing functionality.
-  if $rabbit_hosts {
-    package { 'kombu':
-      ensure => '2.4.7',
-      provider => pip,
-      require => Package['python-pip'],
-    }
-    package { 'anyjson':
-      ensure => '0.3.3',
-      provider => pip,
-      require => Package['python-pip'],
-    }
-    package { 'amqp':
-      ensure => '0.9.4',
-      provider => pip,
-      require => Package['python-pip'],
-    }
-  }
-
   #
   # indicates that all nova config entries that we did
   # not specifify in Puppet should be purged from file
@@ -146,6 +126,9 @@ class openstack-ha::compute (
   }
 
   $nova_sql_connection = "mysql://${nova_db_user}:${nova_db_password}@${db_host}/${nova_db_name}"
+
+  # install and configure rabbitmq mirrored queues nova patch
+  class { 'openstack-ha::patch::nova-rabbitmq': }
 
   class { 'nova':
     sql_connection      => $nova_sql_connection,
