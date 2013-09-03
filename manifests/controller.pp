@@ -281,26 +281,6 @@ class openstack-ha::controller (
     $vncproxy_host_real = $public_address
   }
 
-  # Install the required client packages
-  # for mirrored queueing to work properly.
-  if $rabbit_hosts {
-    package { 'kombu':
-      ensure => '2.4.7',
-      provider => pip,
-      require => Package['python-pip'],
-    }
-    package { 'anyjson':
-      ensure => '0.3.3',
-      provider => pip,
-      require => Package['python-pip'],
-    }
-    package { 'amqp':
-      ensure => '0.9.4',
-      provider => pip,
-      require => Package['python-pip'],
-    }
-  }
-
   # Ensure things are run in order
   Class['openstack-ha::db::galera'] -> Class['openstack::keystone']
   Class['openstack-ha::db::galera'] -> Class['openstack::glance']
@@ -411,6 +391,9 @@ class openstack-ha::controller (
       purge => true,
     }
   }
+
+  # install and configure rabbitmq mirrored queues nova patch
+  class { 'openstack-ha::patch::nova-rabbitmq': }
 
   class { 'openstack::nova::controller':
     # Database
