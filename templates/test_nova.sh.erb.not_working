@@ -41,17 +41,17 @@ nova keypair-add --pub_key /tmp/id_rsa.pub test_key
 
 instance_name='<%= image_type %>_test_vm'
 
-# If Quantum is enabled, create networks, subnets and router.
-<% if quantum -%>
+# If Neutron is enabled, create networks, subnets and router.
+<% if neutron -%>
 public_net=<%= public_net %>
-quantum net-create public --router:external=True
-quantum subnet-create --name public public $public_net
-quantum net-create net1
-quantum subnet-create --name subnet1 net1 10.10.10.0/24
-quantum router-create router1
-quantum router-interface-add router1 subnet1
-quantum router-gateway-set router1 public
-quantum_net=`quantum net-list | grep net1 | awk -F' ' '{print $2}'`
+neutron net-create public --router:external=True
+neutron subnet-create --name public public $public_net
+neutron net-create net1
+neutron subnet-create --name subnet1 net1 10.10.10.0/24
+neutron router-create router1
+neutron router-interface-add router1 subnet1
+neutron router-gateway-set router1 public
+neutron_net=`neutron net-list | grep net1 | awk -F' ' '{print $2}'`
 <% end -%>
 
 # Create Nova security group and rules if floating-ip is enabled.
@@ -64,7 +64,7 @@ nova secgroup-add-rule nova_test icmp -1 -1 0.0.0.0/0
 
 # Boot the added image against the "m1.tiny" flavor which by default maps to a micro instance.  
 sleep 5
-nova boot --image $image_id --flavor m1.tiny --nic net-id=$quantum_net<% if floating_ip -%> --security_groups nova_test<% end %> --key_name test_key $instance_name
+nova boot --image $image_id --flavor m1.tiny --nic net-id=$neutron_net<% if floating_ip -%> --security_groups nova_test<% end %> --key_name test_key $instance_name
 
 # let the system catch up
 sleep 15
@@ -77,9 +77,9 @@ sleep 15
 
 # Now add the floating IP we reserved earlier to the machine.
 <% if floating_ip -%>
-port_id=`quantum port-list | grep 10.10.10.3 | awk -F' ' '{print $2}'`
-floating_ip=`quantum floatingip-list | grep '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | awk '{print $6}'`
-quantum floatingip-create --port_id $port_id public
+port_id=`neutron port-list | grep 10.10.10.3 | awk -F' ' '{print $2}'`
+floating_ip=`neutron floatingip-list | grep '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | awk '{print $6}'`
+neutron floatingip-create --port_id $port_id public
 <% end -%>
 
 # Wait  and then try to SSH to the node, leveraging the private key

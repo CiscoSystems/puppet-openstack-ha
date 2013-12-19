@@ -11,7 +11,7 @@ describe 'openstack::compute' do
       :rabbit_virtual_host   => '/',
       :sql_connection        => 'mysql://user:pass@host/dbname/',
       :cinder_sql_connection => 'mysql://user:pass@host/dbname/',
-      :quantum               => false,
+      :neutron               => false,
       :fixed_range           => '10.0.0.0/16',
     }
   end
@@ -142,13 +142,13 @@ describe 'openstack::compute' do
     end
   end
 
-  describe 'when quantum is false' do
+  describe 'when neutron is false' do
     describe 'configuring for multi host' do
       let :params do
         default_params.merge({
           :multi_host       => true,
           :public_interface => 'eth0',
-          :quantum          => false
+          :neutron          => false
         })
       end
 
