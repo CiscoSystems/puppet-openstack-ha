@@ -20,7 +20,7 @@ describe 'openstack::controller' do
       :nova_db_password      => 'nova_pass',
       :nova_user_password    => 'nova_pass',
       :secret_key            => 'secret_key',
-      :quantum               => false,
+      :neutron               => false,
     }
   end
 
@@ -58,7 +58,7 @@ describe 'openstack::controller' do
         default_params.merge(
           :enabled => true,
           :db_type => 'mysql',
-          :quantum => true,
+          :neutron => true,
           :cinder  => true
         )
       end
@@ -95,10 +95,10 @@ describe 'openstack::controller' do
            :dbname        => 'cinder',
            :allowed_hosts => '%'
          )
-         should contain_class('quantum::db::mysql').with(
-           :user          => 'quantum',
-           :password      => 'quantum_pass',
-           :dbname        => 'quantum',
+         should contain_class('neutron::db::mysql').with(
+           :user          => 'neutron',
+           :password      => 'neutron_pass',
+           :dbname        => 'neutron',
            :allowed_hosts => '%'
          )
       end
@@ -108,17 +108,17 @@ describe 'openstack::controller' do
 
     end
 
-    context 'when cinder and quantum are false' do
+    context 'when cinder and neutron are false' do
 
       let :params do
         default_params.merge(
-          :quantum => false,
+          :neutron => false,
           :cinder  => false
         )
       end
       it do
         should contain_class('nova::volume')
-        should_not contain_class('quantum::db::mysql')
+        should_not contain_class('neutron::db::mysql')
         should_not contain_class('cinder::db::mysql')
       end
 
@@ -139,7 +139,7 @@ describe 'openstack::controller' do
         config_hash['root_password'].should == 'sql_pass'
       end
 
-      ['keystone', 'nova', 'glance', 'cinder', 'quantum'].each do |x|
+      ['keystone', 'nova', 'glance', 'cinder', 'neutron'].each do |x|
         it { should_not contain_class("#{x}::db::mysql") }
       end
     end
@@ -392,7 +392,7 @@ describe 'openstack::controller' do
         :cache_server_ip   => '127.0.0.1',
         :cache_server_port => '11211',
         :swift             => false,
-        :quantum           => false,
+        :neutron           => false,
         :horizon_app_links => false
       )
     end
@@ -460,10 +460,10 @@ describe 'openstack::controller' do
 
   context 'network config' do
 
-    context 'when quantum' do
+    context 'when neutron' do
 
       let :params do
-        default_params.merge(:quantum => true)
+        default_params.merge(:neutron => true)
       end
 
       it { should_not contain_class('nova::network') }
@@ -475,7 +475,7 @@ describe 'openstack::controller' do
 
       context 'when multi-host is not set' do
         let :params do
-          default_params.merge(:quantum => false, :multi_host => false)
+          default_params.merge(:neutron => false, :multi_host => false)
         end
         it {should contain_class('nova::network').with(
           :private_interface => 'eth0',
@@ -493,7 +493,7 @@ describe 'openstack::controller' do
 
       context 'when multi-host is set' do
         let :params do
-          default_params.merge(:quantum => false, :multi_host => true)
+          default_params.merge(:neutron => false, :multi_host => true)
         end
         it { should contain_nova_config('multi_host').with(:value => 'True')}
         it {should contain_class('nova::network').with(

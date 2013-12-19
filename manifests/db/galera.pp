@@ -49,7 +49,7 @@ class openstack-ha::db::galera (
     $glance_db_password,
     $nova_db_password,
     $cinder_db_password,
-    $quantum_db_password,
+    $neutron_db_password,
     # MySQL
     $mysql_bind_address      = '0.0.0.0',
     $mysql_account_security  = true,
@@ -66,10 +66,10 @@ class openstack-ha::db::galera (
     $cinder                  = true,
     $cinder_db_user          = 'cinder',
     $cinder_db_dbname        = 'cinder',
-    # quantum
-    $quantum                 = true,
-    $quantum_db_user         = 'quantum',
-    $quantum_db_dbname       = 'quantum',
+    # neutron
+    $neutron                 = true,
+    $neutron_db_user         = 'neutron',
+    $neutron_db_dbname       = 'neutron',
     $allowed_hosts           = false,
     # Galera
     $galera_master_ip        = false,
@@ -143,12 +143,12 @@ class openstack-ha::db::galera (
       }
     }
 
-    # create quantum db
-    if ($quantum) {
-      class { 'quantum::db::mysql':
-        user             => $quantum_db_user,
-        password         => $quantum_db_password,
-        dbname           => $quantum_db_dbname,
+    # create neutron db
+    if ($neutron) {
+      class { 'neutron::db::mysql':
+        user             => $neutron_db_user,
+        password         => $neutron_db_password,
+        dbname           => $neutron_db_dbname,
         allowed_hosts    => $allowed_hosts,
       }
     }

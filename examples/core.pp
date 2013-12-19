@@ -1,7 +1,7 @@
 # This document serves as an example of how to deploy
 # a high-availability openstack environment.
 # In this scenario nova-network and nova-volumes is
-# being used instead of Quantum and Cinder.
+# being used instead of Neutron and Cinder.
 
 node base {
 
@@ -194,7 +194,7 @@ class compute (
     private_interface     => $private_interface,
     internal_address      => $ipaddress_eth0,
     bridge_interface      => $ovs_bridge_interface,
-    quantum_bind_address  => $ipaddress_eth0,
+    neutron_bind_address  => $ipaddress_eth0,
     # Database
     db_host               => $controller_cluster_vip,
     # Nova
@@ -211,9 +211,9 @@ class compute (
     rabbit_password       => $rabbit_password,
     # Keystone
     keystone_host         => $keystone_host,
-    # Quantum
-    quantum_user_password => $quantum_user_password,
-    quantum_db_password   => $quantum_db_password,
+    # Neutron
+    neutron_user_password => $neutron_user_password,
+    neutron_db_password   => $neutron_db_password,
     # Glance
     glance_api_servers    => "${controller_cluster_vip}:9292",
     # VNC

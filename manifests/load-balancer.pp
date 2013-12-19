@@ -210,7 +210,7 @@ class openstack-ha::load-balancer(
     options           => 'check inter 2000 rise 2 fall 5',
   }
 
-  haproxy::listen { 'quantum_api_cluster':
+  haproxy::listen { 'neutron_api_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '9696',
     options   => {
@@ -219,8 +219,8 @@ class openstack-ha::load-balancer(
     }
   }
 
-  haproxy::balancermember { 'quantum_api':
-    listening_service => 'quantum_api_cluster',
+  haproxy::balancermember { 'neutron_api':
+    listening_service => 'neutron_api_cluster',
     ports             => '9696',
     server_names      => $controller_names,
     ipaddresses       => $controller_ipaddresses,

@@ -249,7 +249,7 @@ node /slb01/ inherits base {
     options           => 'check inter 2000 rise 2 fall 5',
   }
 
-  haproxy::listen { 'quantum_api_cluster':
+  haproxy::listen { 'neutron_api_cluster':
     ipaddress => $controller_cluster_vip,
     ports     => '9696',
     options   => {
@@ -258,8 +258,8 @@ node /slb01/ inherits base {
     }
   }
 
-  haproxy::balancermember { 'quantum_api':
-    listening_service => 'quantum_api_cluster',
+  haproxy::balancermember { 'neutron_api':
+    listening_service => 'neutron_api_cluster',
     ports             => '9696',
     server_names      => [$::controller01_hostname, $::controller02_hostname, $::controller03_hostname],
     ipaddresses       => [$::controller01_mgt_ip, $::controller02_mgt_ip, $::controller03_mgt_ip],
@@ -508,7 +508,7 @@ node /slb02/ inherits base {
     options           => 'check inter 2000 rise 2 fall 5',
   }
 
-  haproxy::listen { 'quantum_api_cluster':
+  haproxy::listen { 'neutron_api_cluster':
     ipaddress => $controller_cluster_vip,
     ports     => '9696',
     options   => {
@@ -517,8 +517,8 @@ node /slb02/ inherits base {
     } 
   }
 
-  haproxy::balancermember { 'quantum_api':
-    listening_service => 'quantum_api_cluster',
+  haproxy::balancermember { 'neutron_api':
+    listening_service => 'neutron_api_cluster',
     ports             => '9696',
     server_names      => [$::controller01_hostname, $::controller02_hostname, $::controller03_hostname],
     ipaddresses       => [$::controller01_mgt_ip, $::controller02_mgt_ip, $::controller03_mgt_ip],

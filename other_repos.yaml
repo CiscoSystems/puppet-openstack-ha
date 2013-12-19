@@ -37,6 +37,7 @@ repos:
     git://github.com/CiscoSystems/puppet-pip: pip
     git://github.com/CiscoSystems/puppet-puppet: puppet
     git://github.com/CiscoSystems/puppet-quantum: quantum
+    git://github.com/CiscoSystems/puppet-neutron: neutron
     git://github.com/CiscoSystems/puppet-sysctl.git: sysctl
     git://github.com/CiscoSystems/puppet-inifile: inifile
 
