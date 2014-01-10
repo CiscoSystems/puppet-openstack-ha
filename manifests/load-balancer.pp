@@ -71,7 +71,11 @@ class openstack-ha::load-balancer(
     name_is_process   => true,
   }
 
+  
+
   class { 'haproxy':
+    manage_service => false,    
+    notify => [Exec['restart-keystone'],Exec['restart-glance'],Exec['restart-glance-reg'],Exec['restart-cinder'],Exec['restart-novnc'],Exec['stop-apache'],Service['haproxy']],
     defaults_options => {
       'log'     => 'global',
       'option'  => 'redispatch',
@@ -372,4 +376,48 @@ class openstack-ha::load-balancer(
     ipaddresses       => $swift_proxy_ipaddresses,
     options           => 'check inter 2000 rise 2 fall 5',
   }
+
+
+  exec {'restart-keystone':
+    command   => '/usr/sbin/service keystone restart',
+    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'restart-glance':
+    command => '/usr/sbin/service glance-api restart',
+    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'restart-glance-reg':
+    command => '/usr/sbin/service glance-registry restart',
+    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'restart-cinder':
+    command => '/usr/sbin/service cinder-api restart',
+    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'restart-novnc':
+    command => '/usr/sbin/service nova-novncproxy restart',
+    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'stop-apache':
+    command => '/usr/sbin/service apache2 stop',
+    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  service { "haproxy":
+    ensure => running, 
+    require => Package['haproxy']
+  }
+
 }
+
