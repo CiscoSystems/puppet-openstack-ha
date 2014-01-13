@@ -379,38 +379,44 @@ class openstack-ha::load-balancer(
 
 
   exec {'restart-keystone':
-    command   => '/usr/sbin/service keystone restart',
-    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    command     => '/usr/sbin/service keystone restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/keystone',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
 
   exec {'restart-glance':
-    command => '/usr/sbin/service glance-api restart',
-    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    command     => '/usr/sbin/service glance-api restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/glance-api',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
 
   exec {'restart-glance-reg':
-    command => '/usr/sbin/service glance-registry restart',
-    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    command     => '/usr/sbin/service glance-registry restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/glance-registry',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
 
   exec {'restart-cinder':
-    command => '/usr/sbin/service cinder-api restart',
-    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    command     => '/usr/sbin/service cinder-api restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/cinder-api', 
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
 
   exec {'restart-novnc':
-    command => '/usr/sbin/service nova-novncproxy restart',
-    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    command     => '/usr/sbin/service nova-novncproxy restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/nova-novncproxy',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
 
   exec {'stop-apache':
-    command => '/usr/sbin/service apache2 stop',
-    subscribe => File['/etc/haproxy/haproxy.cfg'],
+    command     => '/usr/sbin/service apache2 stop',
+    onlyif      => '/usr/bin/test -s /etc/init.d/apache2',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
 
