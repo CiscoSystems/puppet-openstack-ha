@@ -24,15 +24,16 @@
 #
 class openstack-ha::load-balancer(
   $controller_virtual_ip,
-  $swift_proxy_virtual_ip,
   $controller_state,
-  $swift_proxy_state,
   $controller_names,
   $controller_ipaddresses,
+  $keepalived_interface     = 'eth0',
+  $swift_enabled            = false,
+  $swift_proxy_virtual_ip,
+  $swift_proxy_state,
   $swift_proxy_names,
   $swift_proxy_ipaddresses,
-  $keepalived_interface     = 'eth0',
-  $track_script             = 'haproxy'
+  $track_script             = 'haproxy',
 ) {
 
   include keepalived
@@ -49,7 +50,7 @@ class openstack-ha::load-balancer(
     $swift_proxy_priority = '100'
   }
 
-  sysctl::value { "net.ipv4.ip_nonlocal_bind": value => "1" }
+  sysctl::value { 'net.ipv4.ip_nonlocal_bind': value => '1' }
 
   keepalived::instance { '50':
     interface    => $keepalived_interface,
@@ -71,11 +72,9 @@ class openstack-ha::load-balancer(
     name_is_process   => true,
   }
 
-  
-
   class { 'haproxy':
-    manage_service => false,    
-    notify => [Exec['restart-keystone'],Exec['restart-glance'],Exec['restart-glance-reg'],Exec['restart-cinder'],Exec['restart-novnc'],Exec['stop-apache'],Service['haproxy']],
+    manage_service   => false,
+    notify           => [Exec['restart-keystone'],Exec['restart-glance'],Exec['restart-glance-reg'],Exec['restart-cinder'],Exec['restart-novnc'],Exec['stop-apache'],Service['haproxy']],
     defaults_options => {
       'log'     => 'global',
       'option'  => 'redispatch',
@@ -343,40 +342,43 @@ class openstack-ha::load-balancer(
     options           => 'check inter 2000 rise 2 fall 5',
   }
 
-  haproxy::listen { 'swift_proxy_cluster':
-    ipaddress => $swift_proxy_virtual_ip,
-    ports     => '8080',
-    options   => {
-      'option'  => ['tcpka', 'tcplog'],
-      'balance' => 'source'
+  if $swift_enabled {
+
+    haproxy::listen { 'swift_proxy_cluster':
+      ipaddress => $swift_proxy_virtual_ip,
+      ports     => '8080',
+      options   => {
+        'option'  => ['tcpka', 'tcplog'],
+        'balance' => 'source'
+      }
     }
-  }
 
-  haproxy::balancermember { 'swift_proxy':
-    listening_service => 'swift_proxy_cluster',
-    ports             => '8080',
-    server_names      => $swift_proxy_names,
-    ipaddresses       => $swift_proxy_ipaddresses,
-    options           => 'check inter 2000 rise 2 fall 5',
-  }
-
-  haproxy::listen { 'swift_memcached_cluster':
-    ipaddress => $swift_proxy_virtual_ip,
-    ports     => '11211',
-    options   => {
-      'option'  => ['tcpka', 'tcplog'],
-      'balance' => 'source'
+    haproxy::balancermember { 'swift_proxy':
+      listening_service => 'swift_proxy_cluster',
+      ports             => '8080',
+      server_names      => $swift_proxy_names,
+      ipaddresses       => $swift_proxy_ipaddresses,
+      options           => 'check inter 2000 rise 2 fall 5',
     }
-  }
 
-  haproxy::balancermember { 'swift_memcached':
-    listening_service => 'swift_memcached_cluster',
-    ports             => '11211',
-    server_names      => $swift_proxy_names,
-    ipaddresses       => $swift_proxy_ipaddresses,
-    options           => 'check inter 2000 rise 2 fall 5',
-  }
+    haproxy::listen { 'swift_memcached_cluster':
+      ipaddress => $swift_proxy_virtual_ip,
+      ports     => '11211',
+      options   => {
+        'option'  => ['tcpka', 'tcplog'],
+        'balance' => 'source'
+      }
+    }
 
+    haproxy::balancermember { 'swift_memcached':
+      listening_service => 'swift_memcached_cluster',
+      ports             => '11211',
+      server_names      => $swift_proxy_names,
+      ipaddresses       => $swift_proxy_ipaddresses,
+      options           => 'check inter 2000 rise 2 fall 5',
+    }
+
+  }
 
   exec {'restart-keystone':
     command     => '/usr/sbin/service keystone restart',
@@ -401,7 +403,7 @@ class openstack-ha::load-balancer(
 
   exec {'restart-cinder':
     command     => '/usr/sbin/service cinder-api restart',
-    onlyif      => '/usr/bin/test -s /etc/init.d/cinder-api', 
+    onlyif      => '/usr/bin/test -s /etc/init.d/cinder-api',
     subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
@@ -420,8 +422,8 @@ class openstack-ha::load-balancer(
     refreshonly => true
   }
 
-  service { "haproxy":
-    ensure => running, 
+  service { 'haproxy':
+    ensure  => running,
     require => Package['haproxy']
   }
 
