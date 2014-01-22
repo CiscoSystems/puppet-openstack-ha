@@ -93,7 +93,6 @@ class openstack-ha::load-balancer(
     ipaddress => $controller_virtual_ip,
     ports     => '3306',
     options   => {
-      'option'  => ['httpchk'],
       'mode'    => 'tcp',
 #      'balance' => 'roundrobin'
 #      'balance' => 'leastconn'
