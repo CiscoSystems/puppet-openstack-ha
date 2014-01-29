@@ -247,6 +247,23 @@ class openstack-ha::load-balancer(
     options           => 'check inter 2000 rise 2 fall 5',
   }
 
+  haproxy::listen { 'ceilometer_api_cluster':
+    ipaddress => $controller_virtual_ip,
+    ports     => '8777',
+    options   => {
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
+    }
+  }
+
+  haproxy::balancermember { 'ceilometer_api':
+    listening_service => 'ceilometer_api_cluster',
+    ports             => '8777',
+    server_names      => $controller_names,
+    ipaddresses       => $controller_ipaddresses,
+    options           => 'check inter 2000 rise 2 fall 5',
+  }
+
   haproxy::listen { 'glance_registry_cluster':
     ipaddress => $controller_virtual_ip,
     ports     => '9191',
@@ -404,6 +421,13 @@ class openstack-ha::load-balancer(
   exec {'restart-cinder':
     command     => '/usr/sbin/service cinder-api restart',
     onlyif      => '/usr/bin/test -s /etc/init.d/cinder-api',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'restart-ceilometer':
+    command     => '/usr/sbin/service ceilometer-api restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/ceilometer-api',
     subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
