@@ -281,6 +281,23 @@ class openstack-ha::load-balancer(
     options           => 'check inter 2000 rise 2 fall 5',
   }
 
+  haproxy::listen { 'heat_api_cluster':
+    ipaddress => $controller_virtual_ip,
+    ports     => '8004',
+    options   => {
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
+    }
+  }
+
+  haproxy::balancermember { 'heat_api':
+    listening_service => 'heat_api_cluster',
+    ports             => '8004',
+    server_names      => $controller_names,
+    ipaddresses       => $controller_ipaddresses,
+    options           => 'check inter 2000 rise 2 fall 5',
+  }
+
   # Note: Failures were experienced when the balance-member was named Horizon.
   haproxy::listen { 'dashboard_cluster':
     ipaddress => $controller_virtual_ip,
@@ -397,6 +414,13 @@ class openstack-ha::load-balancer(
   exec {'restart-glance-reg':
     command     => '/usr/sbin/service glance-registry restart',
     onlyif      => '/usr/bin/test -s /etc/init.d/glance-registry',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'restart-heat':
+    command     => '/usr/sbin/service heat-api restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/heat-api',
     subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
