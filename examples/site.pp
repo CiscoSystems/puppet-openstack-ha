@@ -8,13 +8,8 @@
 # If you do not use an HTTP/HTTPS proxy, leave this setting commented out.
 #$proxy             = "http://proxy-server:port-number"
 
-# If you are behind a proxy you may choose not to use our ftp distribution, and
-# instead try our http distribution location. Note the http location is not
-# a permanent location and may change at any time.
-$location          = "ftp://ftpeng.cisco.com/openstack/cisco"
-
-# Alternate, uncomment this one, and coment out the one above
-#$location           = "http://192.168.26.163/openstack/cisco"
+# The location of the package repository to use.
+$location           = "http://openstack-repo.cisco.com/openstack/cisco"
 
 ########### NTP Configuration ############
 # Change this to the location of a time server in your organization accessible to the build server
