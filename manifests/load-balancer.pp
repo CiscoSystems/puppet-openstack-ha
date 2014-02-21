@@ -17,6 +17,8 @@
 #     swift_proxy_state       => 'BACKUP',
 #     controller_names        => ['control01, control02, control03'],
 #     controller_ipaddresses  => ['1.1.1.1, 2.2.2.2, 3.3.3.3'],
+#     controller_vrid         => '40',
+#     swift_vrid              => '41',
 #     swift_proxy_names       => ['swift01, swift02'],
 #     swift_proxy_ipaddresses => ['4.4.4.4, 5.5.5.5'],
 #   }
@@ -27,6 +29,8 @@ class openstack-ha::load-balancer(
   $controller_state,
   $controller_names,
   $controller_ipaddresses,
+  $controller_vrid          = '50',
+  $swift_vrid               = '51',
   $keepalived_interface     = 'eth0',
   $swift_enabled            = false,
   $swift_proxy_virtual_ip,
@@ -52,7 +56,7 @@ class openstack-ha::load-balancer(
 
   sysctl::value { 'net.ipv4.ip_nonlocal_bind': value => '1' }
 
-  keepalived::instance { '50':
+  keepalived::instance { "$controller_vrid":
     interface    => $keepalived_interface,
     virtual_ips  => "${controller_virtual_ip} dev ${keepalived_interface}",
     state        => $controller_state,
@@ -60,7 +64,7 @@ class openstack-ha::load-balancer(
     track_script => [$track_script],
   }
 
-  keepalived::instance { '51':
+  keepalived::instance { "$swift_vrid":
     interface    => $keepalived_interface,
     virtual_ips  => "${swift_proxy_virtual_ip} dev ${keepalived_interface}",
     state        => $swift_proxy_state,
