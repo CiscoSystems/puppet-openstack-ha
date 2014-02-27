@@ -319,6 +319,40 @@ class openstack-ha::load-balancer(
     options           => 'check inter 2000 rise 2 fall 5',
   }
 
+  haproxy::listen { 'heat_api_cfn_cluster':
+    ipaddress => $controller_virtual_ip,
+    ports     => '8000',
+    options   => {
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
+    }
+  }
+
+  haproxy::balancermember { 'heat_api_cfn':
+    listening_service => 'heat_api_cfn_cluster',
+    ports             => '8000',
+    server_names      => $controller_names,
+    ipaddresses       => $controller_ipaddresses,
+    options           => 'check inter 2000 rise 2 fall 5',
+  }
+
+  haproxy::listen { 'heat_api_cloudwatch_cluster':
+    ipaddress => $controller_virtual_ip,
+    ports     => '8003',
+    options   => {
+      'option'  => ['tcpka', 'httpchk', 'tcplog'],
+      'balance' => 'source'
+    }
+  }
+
+  haproxy::balancermember { 'heat_api_cloudwatch':
+    listening_service => 'heat_api_cloudwatch_cluster',
+    ports             => '8003',
+    server_names      => $controller_names,
+    ipaddresses       => $controller_ipaddresses,
+    options           => 'check inter 2000 rise 2 fall 5',
+  }
+
   # Note: Failures were experienced when the balance-member was named Horizon.
   haproxy::listen { 'dashboard_cluster':
     ipaddress => $controller_virtual_ip,
@@ -442,6 +476,20 @@ class openstack-ha::load-balancer(
   exec {'restart-heat':
     command     => '/usr/sbin/service heat-api restart',
     onlyif      => '/usr/bin/test -s /etc/init.d/heat-api',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'restart-heat-api-cfn':
+    command     => '/usr/sbin/service heat-api-cfn restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/heat-api-cfn',
+    subscribe   => File['/etc/haproxy/haproxy.cfg'],
+    refreshonly => true
+  }
+
+  exec {'restart-heat-api-cloudwatch':
+    command     => '/usr/sbin/service heat-api-cloudwatch restart',
+    onlyif      => '/usr/bin/test -s /etc/init.d/heat-api-cloudwatch',
     subscribe   => File['/etc/haproxy/haproxy.cfg'],
     refreshonly => true
   }
