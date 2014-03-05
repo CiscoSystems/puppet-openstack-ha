@@ -12,7 +12,8 @@
 #   class {'openstack-ha::load-balancer':
 #     controller_virtual_ip   => '10.10.10.10',
 #     swift_proxy_virtual_ip  => '11.11.11.11',
-#     keepalived_interface    => 'eth0',
+#     controller_interface    => 'eth0',
+#     swift_proxy_interface   => 'eth0',
 #     controller_state        => 'MASTER',
 #     swift_proxy_state       => 'BACKUP',
 #     controller_names        => ['control01, control02, control03'],
@@ -31,14 +32,22 @@ class openstack-ha::load-balancer(
   $controller_ipaddresses,
   $controller_vrid          = '50',
   $swift_vrid               = '51',
-  $keepalived_interface     = 'eth0',
+  $controller_interface     = 'eth0',
   $swift_enabled            = false,
   $swift_proxy_virtual_ip,
   $swift_proxy_state,
   $swift_proxy_names,
   $swift_proxy_ipaddresses,
+  $swift_proxy_interface    = $controller_interface_real,
   $track_script             = 'haproxy',
 ) {
+
+  if $keepalived_interface {
+      warning('Using $keepalived_interface has been deprecated in favor of $controller_interface and will be removed.')
+      $controller_interface_real = $keepalived_interface
+  } else {
+      $controller_interface_real = $controller_interface
+  }
 
   include keepalived
 
@@ -57,16 +66,16 @@ class openstack-ha::load-balancer(
   sysctl::value { 'net.ipv4.ip_nonlocal_bind': value => '1' }
 
   keepalived::instance { "$controller_vrid":
-    interface    => $keepalived_interface,
-    virtual_ips  => "${controller_virtual_ip} dev ${keepalived_interface}",
+    interface    => $controller_interface_real,
+    virtual_ips  => "${controller_virtual_ip} dev ${controller_interface_real}",
     state        => $controller_state,
     priority     => $controller_priority,
     track_script => [$track_script],
   }
 
   keepalived::instance { "$swift_vrid":
-    interface    => $keepalived_interface,
-    virtual_ips  => "${swift_proxy_virtual_ip} dev ${keepalived_interface}",
+    interface    => $swift_proxy_interface,
+    virtual_ips  => "${swift_proxy_virtual_ip} dev ${swift_proxy_interface}",
     state        => $swift_proxy_state,
     priority     => $swift_proxy_priority,
     track_script => [$track_script],
