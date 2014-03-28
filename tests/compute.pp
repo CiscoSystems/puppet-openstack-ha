@@ -5,6 +5,6 @@ class { 'openstack::nova::compute':
   internal_address     => $::ipaddress_eth1,
   rabbit_password      => 'password',
   nova_user_password   => 'password',
-  libvirt_type         => 'qemu',
+  libvirt_virt_type    => 'qemu',
   vncproxy_host        => '192.168.1.1',
 }
