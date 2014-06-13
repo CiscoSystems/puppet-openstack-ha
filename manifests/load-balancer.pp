@@ -10,29 +10,39 @@
 # Example Usage
 # node 'slb01' {
 #   class {'openstack-ha::load-balancer':
-#     controller_virtual_ip   => '10.10.10.10',
-#     swift_proxy_virtual_ip  => '11.11.11.11',
-#     controller_interface    => 'eth0',
-#     swift_proxy_interface   => 'eth0',
-#     controller_state        => 'MASTER',
-#     swift_proxy_state       => 'BACKUP',
-#     controller_names        => ['control01, control02, control03'],
-#     controller_ipaddresses  => ['1.1.1.1, 2.2.2.2, 3.3.3.3'],
-#     controller_vrid         => '40',
-#     swift_vrid              => '41',
-#     swift_proxy_names       => ['swift01, swift02'],
-#     swift_proxy_ipaddresses => ['4.4.4.4, 5.5.5.5'],
+#     galera_master_ipaddress   => '1.1.1.1',
+#     galera_master_name        => 'control01',
+#     galera_backup_ipaddresses => ['2.2.2.2, 3.3.3.3'],
+#     galera_backup_names       => ['control02, control03'],
+#     controller_virtual_ip     => '10.10.10.10',
+#     controller_state          => 'MASTER',
+#     controller_names          => ['control01, control02, control03'],
+#     controller_ipaddresses    => ['1.1.1.1, 2.2.2.2, 3.3.3.3'],
+#     controller_interface      => 'eth0',
+#     controller_vrid           => '40',
+#     swift_vrid                => '41',
+#     swift_enabled             => true,
+#     swift_proxy_virtual_ip    => '11.11.11.11',
+#     swift_proxy_state         => 'BACKUP',
+#     swift_proxy_names         => ['swift01, swift02'],
+#     swift_proxy_ipaddresses   => ['4.4.4.4, 5.5.5.5'],
+#     swift_proxy_interface     => 'eth0',
+#     track_script              => 'haproxy',
 #   }
 # }
 #
 class openstack-ha::load-balancer(
+  $galera_master_ipaddress,
+  $galera_master_name,
+  $galera_backup_ipaddresses,
+  $galera_backup_names,
   $controller_virtual_ip,
   $controller_state,
   $controller_names,
   $controller_ipaddresses,
+  $controller_interface     = 'eth0',
   $controller_vrid          = '50',
   $swift_vrid               = '51',
-  $controller_interface     = 'eth0',
   $swift_enabled            = false,
   $swift_proxy_virtual_ip,
   $swift_proxy_state,
@@ -114,13 +124,27 @@ class openstack-ha::load-balancer(
     }
   }
 
-  haproxy::balancermember { 'galera':
+  #
+  # For Galera we now use an active-passive proxy
+  # Here, we define one node as the actively bound writer
+  haproxy::balancermember { 'galera_master':
     listening_service => 'galera_cluster',
     ports             => '3306',
-    server_names      => $controller_names,
-    ipaddresses       => $controller_ipaddresses,
+    server_names      => $galera_master_name,
+    ipaddresses       => $galera_master_ipaddress,
     # Note: Checking port 9200 due to health_check script.
-    options           => 'check port 9200 inter 2000 rise 2 fall 5',
+    options           => 'check port 9200 inter 2000 rise 2 fall 3',
+  }
+
+  #
+  # all other Galera nodes are bound as backups only
+  haproxy::balancermember { 'galera_backup':
+    listening_service => 'galera_cluster',
+    ports             => '3306',
+    server_names      => $galera_backup_names,
+    ipaddresses       => $galera_backup_ipaddresses,
+    # Note: Checking port 9200 due to health_check script.
+    options           => 'check port 9200 inter 2000 rise 2 fall 3 backup',
   }
 
   haproxy::listen { 'rabbit_cluster':
